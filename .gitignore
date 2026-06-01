@@ -1,0 +1,14 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Raw data CSVs (already in BigQuery, too large for git)
+data/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
