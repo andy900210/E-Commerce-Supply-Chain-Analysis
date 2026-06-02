@@ -1,7 +1,14 @@
 -- ============================================================================
--- order_master: Master analytics view joining all ecommerce supply chain tables
--- Project: stalwart-coast-484305-c5
--- Dataset: ecommerce_supply_chain
+-- Module 01: order_master — Master Analytics View
+-- Project:   stalwart-coast-484305-c5
+-- Dataset:   ecommerce_supply_chain
+--
+-- Joins all 8 source tables into a single flat view with calculated fields:
+--   delivery_days   : actual days from purchase to delivery
+--   estimated_days  : promised delivery days
+--   delay_days      : actual minus estimated (negative = early, positive = late)
+--   is_late         : TRUE if delivered after estimated date
+--   is_delivered    : TRUE if order_status = 'delivered'
 -- ============================================================================
 
 CREATE OR REPLACE VIEW `stalwart-coast-484305-c5.ecommerce_supply_chain.order_master` AS
@@ -33,11 +40,11 @@ SELECT
   o.order_estimated_delivery_date,
 
   -- Calculated delivery metrics
-  TIMESTAMP_DIFF(o.order_delivered_customer_date, o.order_purchase_timestamp, DAY)   AS delivery_days,
-  TIMESTAMP_DIFF(o.order_estimated_delivery_date, o.order_purchase_timestamp, DAY)   AS estimated_days,
+  TIMESTAMP_DIFF(o.order_delivered_customer_date, o.order_purchase_timestamp, DAY)      AS delivery_days,
+  TIMESTAMP_DIFF(o.order_estimated_delivery_date, o.order_purchase_timestamp, DAY)      AS estimated_days,
   TIMESTAMP_DIFF(o.order_delivered_customer_date, o.order_estimated_delivery_date, DAY) AS delay_days,
-  (o.order_delivered_customer_date > o.order_estimated_delivery_date)                AS is_late,
-  (o.order_status = 'delivered')                                                      AS is_delivered,
+  (o.order_delivered_customer_date > o.order_estimated_delivery_date)                   AS is_late,
+  (o.order_status = 'delivered')                                                         AS is_delivered,
 
   -- -------------------------------------------------
   -- Order item
@@ -46,9 +53,9 @@ SELECT
   i.product_id,
   i.seller_id,
   i.shipping_limit_date,
-  i.price                                                                             AS item_price,
+  i.price                     AS item_price,
   i.freight_value,
-  i.price + i.freight_value                                                           AS item_total,
+  i.price + i.freight_value   AS item_total,
 
   -- -------------------------------------------------
   -- Product
@@ -65,7 +72,7 @@ SELECT
   -- -------------------------------------------------
   -- Product category translation (English)
   -- -------------------------------------------------
-  t.string_field_1                                                                    AS product_category_name_english,
+  t.string_field_1            AS product_category_name_english,
 
   -- -------------------------------------------------
   -- Customer
