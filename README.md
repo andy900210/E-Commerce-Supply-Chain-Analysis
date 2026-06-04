@@ -1,136 +1,73 @@
 # Brazilian E-Commerce Supply Chain Analytics
 
-## Project Overview
+Delivery performance, seller reliability, and category risk analysis for a Brazilian e-commerce marketplace. Built on Google BigQuery using the Olist dataset (100K+ orders).
 
-A comprehensive supply chain analytics project built on **Google BigQuery**, analyzing **99,441 orders**, **112,650 order items**, **3,095 sellers**, and **32,951 products** from the Brazilian e-commerce marketplace Olist. This project evaluates delivery performance, seller reliability, and product category health to uncover actionable supply chain optimization opportunities.
+## Background
 
-**Platform:** Google BigQuery  
-**Dataset:** [Olist Brazilian E-Commerce Dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (Kaggle)  
-**Scale:** 99,441 orders | 112,650 order items | 3,095 sellers | 32,951 products | 9 tables
+This was my first BigQuery project — a full walkthrough of how I approach supply chain data when dropped into a new marketplace. The Olist dataset is messy in the way real data is messy: 9 tables with inconsistent timestamps, sellers with 1 order sitting next to sellers with 2,000, and product categories that sometimes just say "uncategorized."
 
----
+I built a unified master view, then systematically answered the three questions every ops team needs answered: Are we delivering on time? Which sellers are dragging us down? Which product categories are problems?
 
-## Business Context
+## Data
 
-A mid-size e-commerce marketplace needs to:
-1. **Track delivery performance** — Are we delivering on time? Which regions are struggling?
-2. **Evaluate seller reliability** — Which sellers are stars vs. risks?
-3. **Identify product category risks** — Are certain categories damaging customer satisfaction?
-4. **Build data-driven dashboards** — Enable stakeholders to make informed decisions
-5. **Quantify late delivery impact** — Understand the cost and frequency of supply chain failures
+9 tables from the Olist Brazilian E-Commerce dataset (Kaggle):
+- 99,441 orders, 112,650 order items
+- 3,095 sellers, 32,951 products
+- Full delivery tracking with timestamps
 
----
+## What I Found
 
-## Analytical Modules
+**Delivery is better than it looks on paper.** The marketplace delivers in 12 days on average while promising 23.4 days — a 49% buffer that results in 92.1% on-time rate. Customers are being pleasantly surprised, which is actually good CX strategy.
 
-| Module | Focus Area | Key Deliverable |
-|--------|-----------|-----------------|
-| **01** | Data Model | `order_master` view — unified 360° view joining all 9 tables |
-| **02** | Delivery Performance | Overall KPIs, state-level ranking, monthly trend |
-| **03** | Seller Scorecard | Composite score (on-time × review quality × low-review rate) |
-| **04** | Category Insights | Revenue leaders & high-risk categories |
+**But the Northeast is broken.** Alagoas has a 24.1% late rate, Maranhão 20.2%. These aren't just "below average" — they're structurally underserved by the logistics network. A customer in Alagoas waits 8.5 extra days on average.
 
----
+**March 2018 was a disaster** — 20.4% late rate, likely the hangover from a holiday demand spike that overwhelmed fulfillment capacity.
 
-## Key Findings
+**The bottom seller is catastrophically bad:** 35.7% on-time, 1.72-star average review, 77.8% of reviews are 1-2 stars. This seller should have been deplatformed months ago.
 
-### Delivery Performance (Module 02)
-- **On-time delivery rate: 92.1%** — marketplace average is strong
-- **Avg actual delivery: 12.0 days** vs. **23.4 days estimated** → delivering 49% faster than promised
-- **Worst performing state: Alagoas (AL)** — 24.1% late rate, buyers wait 8.5 extra days on average
-- **Most volatile month: March 2018** — 20.4% late rate (peak operational strain)
-- **November 2017 (Black Friday):** 13.8% late rate on 8,537 orders — seasonal demand spike
+**Only 2 product categories are truly high-risk** — "uncategorized" (data quality issue, not a logistics issue) and "office furniture" (bulky items averaging 20.4 days delivery with 3.49-star reviews).
 
-### Seller Scorecard (Module 03)
-- **1,238 sellers** evaluated with ≥ 10 delivered orders
-- **Average composite score: 86.58 / 100** — most sellers perform well
-- **Top sellers:** Perfect 100% on-time, 5.0★ reviews, 0% low reviews
-- **Bottom seller (score 32.49):** Only 35.7% on-time, 1.72★ avg review, 77.8% of reviews ≤ 2 stars — clear exit candidate
-- **Score distribution:** 90th percentile = 94.41, showing a healthy tail of excellent sellers
+## Modules
 
-### Category Insights (Module 04)
-- **Top revenue driver:** Health & Beauty — 1.45M BRL across 8,836 orders
-- **Highest AOV:** Computers — 1,147 BRL (but only 181 orders — niche/high-value)
-- **Best performing:** Luggage Accessories — 4.32★ reviews, only 5.4% late rate
-- ⚠️ **High-risk categories identified:**
-  - **Uncategorized products** (2,248 orders, 3.16★ avg) — missing category mapping data
-  - **Office Furniture** (1,273 orders, 20.4 days avg delivery) — slow logistics for bulky items, 3.49★ reviews
-
----
-
-## Technical Skills Demonstrated
-
-- **Google BigQuery:** Complex multi-table joins, CTEs, window functions, `COUNTIF`, `TIMESTAMP_DIFF`, `FORMAT_TIMESTAMP`, schema auto-detection
-- **Data Modeling:** Star-schema dimensional design, aggregated master views, denormalized analytics views
-- **Supply Chain Analytics:** On-time delivery rate, late rate, lead time analysis, category risk assessment, seller segmentation
-- **Data Engineering:** CSV-to-BigQuery pipeline with auto-detect schema, `WRITE_TRUNCATE` for idempotent reloads
-- **Python:** BigQuery client library, CSV export, composite scoring algorithms
-- **Business Framing:** Translating raw SQL outputs into procurement and logistics recommendations
-
----
+| # | Focus | What it answers |
+|---|-------|-----------------|
+| 01 | Data Model | `order_master` view joining all 9 tables with calculated fields |
+| 02 | Delivery Performance | On-time rates, state rankings, monthly trends |
+| 03 | Seller Scorecard | Composite score: 40% on-time + 40% review + 20% low-review penalty |
+| 04 | Category Insights | Revenue leaders and categories that damage customer satisfaction |
 
 ## Project Structure
 
 ```
 ├── README.md
-├── .gitignore
 ├── sql/
-│   ├── 01_create_order_master_view.sql       — Unified master view (9 tables joined)
-│   ├── 02_delivery_performance.sql            — 3 delivery KPI queries
-│   ├── 03_seller_scorecard.sql                — Seller raw metrics query
-│   └── 04_product_category_insights.sql       — Sales & risk category queries
+│   ├── 01_create_order_master_view.sql
+│   ├── 02_delivery_performance.sql
+│   ├── 03_seller_scorecard.sql
+│   └── 04_product_category_insights.sql
 ├── python/
-│   ├── upload_to_bigquery.py                  — CSV → BigQuery upload pipeline
-│   ├── verify_order_master.py                 — View validation script
-│   ├── supply_chain_queries.py                — Delivery performance queries
-│   ├── seller_scorecard.py                    — Seller composite scoring
-│   └── product_category_insights.py           — Category analysis queries
+│   ├── upload_to_bigquery.py
+│   ├── supply_chain_queries.py
+│   ├── seller_scorecard.py
+│   └── product_category_insights.py
 └── output/
     ├── overall_delivery_performance.csv
     ├── late_orders_by_state_top10.csv
     ├── monthly_order_volume_trend.csv
     ├── seller_scorecard_top20.csv
     ├── seller_scorecard_bottom20.csv
-    ├── seller_scorecard_summary.csv
-    ├── category_sales_performance_top25.csv
     └── category_high_risk.csv
 ```
 
----
+## How to Run
 
-## How to Reproduce
-
-1. **Load the dataset into BigQuery:**
-   ```bash
-   python python/upload_to_bigquery.py
-   ```
-   (Requires Google Cloud SDK authenticated with `gcloud auth application-default login`)
-
-2. **Create the master analytics view:**
-   Run `sql/01_create_order_master_view.sql` in BigQuery SQL workspace or via `bq query`
-
-3. **Run analytical queries:**
-   - `sql/02_delivery_performance.sql` — Delivery KPIs
-   - `sql/03_seller_scorecard.sql` — Seller metrics (composite scoring in Python)
-   - `sql/04_product_category_insights.sql` — Category analysis
-
-4. **Generate CSV reports:**
-   ```bash
-   python python/supply_chain_queries.py
-   python python/seller_scorecard.py
-   python python/product_category_insights.py
-   ```
-
----
+1. Download the [Olist dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) from Kaggle
+2. Run `python python/upload_to_bigquery.py` to load into BigQuery
+3. Execute SQL scripts in order (01 creates the view, 02-04 are independent queries)
+4. Python scripts generate the CSV reports in `output/`
 
 ## About
 
-Built by **Andy Yin** — Data & Supply Chain Analytics Specialist.
+I work in data warehousing and supply chain analytics. This project uses public data to demonstrate the same analytical patterns I apply professionally — delivery SLA monitoring, supplier scorecards, category risk assessment — without exposing proprietary business data from my employer.
 
-This project showcases end-to-end supply chain analytics capabilities using public data (Olist Brazilian E-Commerce Dataset). It demonstrates practical application of BigQuery SQL, Python data pipelines, and business intelligence techniques that are directly transferable to real-world supply chain and procurement analytics roles.
-
-**Contact:** [LinkedIn](https://www.linkedin.com/in/andy900210) | [GitHub](https://github.com/andy900210)
-
----
-
-> *Note: Some analytical approaches demonstrated here (seller scoring, category risk assessment) mirror methodologies used in professional supply chain analytics engagements. The public dataset is used as a proxy to demonstrate analytical capabilities while respecting employer confidentiality agreements.*
+Andy Yin — [LinkedIn](https://www.linkedin.com/in/andy900210) | [GitHub](https://github.com/andy900210)
